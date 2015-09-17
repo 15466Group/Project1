@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Move : MonoBehaviour {
+public class Wander : MonoBehaviour {
 
 	private Vector3 movement;
 	public Animation anim;
