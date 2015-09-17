@@ -32,7 +32,7 @@ public class Wander : MonoBehaviour {
 		targetAccel = new Vector3 (0.0f, 0.0f, 0.0f);
 		targetPosition = new Vector3 (0.0f, 0.0f, 0.0f);
 		maxMagDelta = 100.0f;
-		maxRadsDelta = Mathf.Deg2Rad * 15.0f;
+		maxRadsDelta = Mathf.Deg2Rad * 1.0f;
 
 		idleSpeed = 0.0f;
 		walkingSpeed = 8.0f;
@@ -49,17 +49,15 @@ public class Wander : MonoBehaviour {
 		velocity = velocity + acceleration * Time.deltaTime;
 		velocity = Vector3.ClampMagnitude (velocity, maxSpeed);
 
-		if (timer >= 4.0f) {
-			randomRad = 0.0f;
-			if (targetAccel == acceleration) {
-				randomRad = Random.Range (0.0f, Mathf.PI * 2.0f);
-				float newx = accMag * Mathf.Cos (randomRad);
-				float newz = accMag * Mathf.Sin (randomRad);
-				targetAccel = new Vector3 (newx, 0.0f, newz);
-			}
-			timer = 0.0f;
+		randomRad = 0.0f;
+		if (targetAccel == acceleration) {
+			randomRad = Random.Range (0.0f, Mathf.PI * 2.0f);
+			float newx = accMag * Mathf.Cos (randomRad);
+			float newz = accMag * Mathf.Sin (randomRad);
+			targetAccel = new Vector3 (newx, 0.0f, newz);
 		}
 
+		Debug.Log (maxRadsDelta);
 		acceleration = Vector3.RotateTowards (acceleration, targetAccel, maxRadsDelta, maxMagDelta);
 
 		targetPosition = transform.position + velocity * Time.deltaTime;
@@ -80,6 +78,7 @@ public class Wander : MonoBehaviour {
 		Vector3 relativePosition;
 		relativePosition = targetPosition - transform.position;
 		Debug.DrawRay(transform.position,relativePosition*10,Color.red);
+		Debug.DrawRay(transform.position,targetAccel*10,Color.red);
 		Debug.DrawRay(transform.position,velocity*10,Color.green);
 		Debug.DrawRay(transform.position,acceleration*10,Color.blue);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
