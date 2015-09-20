@@ -58,6 +58,7 @@ public class ReachGoal : MonoBehaviour {
 
 
 		targetAccel = new Vector3 (target.transform.position.x - transform.position.x, 0.0f,target.transform.position.z - transform.position.z);
+		//targetAccel = new Vector3 (transform.position.x - target.transform.position.x, 0.0f, transform.position.z - target.transform.position.z);
 		targetAccel = targetAccel.normalized;
 		targetAccel = targetAccel * accMag;
 
@@ -80,6 +81,9 @@ public class ReachGoal : MonoBehaviour {
 		Debug.DrawRay(transform.position,targetAccel*10,Color.red);
 		Debug.DrawRay(transform.position,velocity*10,Color.green);
 		Debug.DrawRay(transform.position,acceleration*10,Color.blue);
+		Debug.DrawRay(transform.position - transform.right*5.0f, transform.forward * 50.0f, Color.yellow);
+		Debug.DrawRay(transform.position + transform.right*5.0f, transform.forward * 50.0f, Color.yellow);
+		Debug.DrawRay(transform.position, relativePosition * 50.0f, Color.yellow);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
 	}
@@ -96,6 +100,20 @@ public class ReachGoal : MonoBehaviour {
 		else { //exponential growth, capped at previous maxSpeed
 			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, 50.0f);
 		}
+	}
+
+	void collisions() {
+		float maxDistance = 50.0f;
+		RaycastHit hitL;
+		RaycastHit hitR;
+		RaycastHit hitT;
+		float charWidth;
+		bool hitLeft = Physics.Raycast (transform.position - transform.right*5.0f, transform.forward, out hitL, maxDistance);
+		bool hitRight = Physics.Raycast (transform.position + transform.right*5.0f, transform.forward, out hitR, maxDistance);
+		bool hitTarget = Physics.Raycast (transform.position, target.transform.position - transform.position, out hitT, maxDistance);
+
+		//if()
+
 	}
 
 }
