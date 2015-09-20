@@ -91,7 +91,7 @@ public class ReachGoal : MonoBehaviour {
 		float distance = Mathf.Sqrt (xDistance * xDistance + zDistance * zDistance);
 
 		if (distance <= epsilon) {
-			maxSpeed = 0.0f;
+			maxSpeed = 0.0f; 
 		}
 		else { //exponential growth, capped at previous maxSpeed
 			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, 50.0f);
