@@ -9,13 +9,13 @@ public class ReachGoal : MonoBehaviour {
 	private Vector3 acceleration;
 	private Vector3 velocity;
 	private float accMag;
-	public float maxSpeed;
+	private float maxSpeed;
 
 	private Vector3 targetAccel;
 	private Vector3 targetPosition;
 
 	private float idleSpeed;
-	public float walkingSpeed;
+	private float walkingSpeed;
 
 	private float maxRadsDelta;
 	private float maxMagDelta;
@@ -37,6 +37,9 @@ public class ReachGoal : MonoBehaviour {
 		idleSpeed = 0.0f;
 		anim.CrossFade ("idle");
 		smooth = 5.0f;
+		walkingSpeed = 20.0f;
+		maxSpeed = 50.0f;
+		anim.CrossFade ("idle");
 	}
 	
 	// Update is called once per frame
@@ -45,10 +48,13 @@ public class ReachGoal : MonoBehaviour {
 		transform.position += velocity * Time.deltaTime;
 		velocity = velocity + acceleration * Time.deltaTime;
 		velocity = Vector3.ClampMagnitude (velocity, maxSpeed);
+		//velocity = veloCloseToTarget (velocity);
+		veloCloseToTarget ();
 		
 		acceleration = Vector3.RotateTowards (acceleration, targetAccel, maxRadsDelta, maxMagDelta);
 		targetPosition = transform.position + velocity * Time.deltaTime;
-		RotateTo (targetPosition);
+		if (velocity != new Vector3())
+			RotateTo (targetPosition);
 
 
 		targetAccel = new Vector3 (target.transform.position.x - transform.position.x, 0.0f,target.transform.position.z - transform.position.z);
@@ -61,8 +67,9 @@ public class ReachGoal : MonoBehaviour {
 			anim.CrossFade ("Walk");
 		} else if (mag > walkingSpeed) {
 			anim.CrossFade ("Run");
-		} else 
+		} else {
 			anim.CrossFade ("idle");
+		}
 	}
 
 	void RotateTo(Vector3 targetPosition){
@@ -76,4 +83,19 @@ public class ReachGoal : MonoBehaviour {
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
 	}
+
+	void veloCloseToTarget () {
+		float epsilon = 0.7f;
+		float xDistance = Mathf.Abs (transform.position.x - target.transform.position.x);
+		float zDistance = Mathf.Abs (transform.position.z - target.transform.position.z);
+		float distance = Mathf.Sqrt (xDistance * xDistance + zDistance * zDistance);
+
+		if (distance <= epsilon) {
+			maxSpeed = 0.0f;
+		}
+		else { //exponential growth, capped at previous maxSpeed
+			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, 50.0f);
+		}
+	}
+
 }
