@@ -10,6 +10,7 @@ public class ReachGoal : MonoBehaviour {
 	private Vector3 velocity;
 	private float accMag;
 	private float maxSpeed;
+	private float originalMaxSpeed;
 
 	private Vector3 targetAccel;
 	private Vector3 targetPosition;
@@ -21,6 +22,9 @@ public class ReachGoal : MonoBehaviour {
 	private float maxMagDelta;
 
 	private float smooth;
+
+	private float charWidth;
+	private float rayDist;
 
 	// Use this for initialization
 	void Start () {
@@ -37,9 +41,12 @@ public class ReachGoal : MonoBehaviour {
 		idleSpeed = 0.0f;
 		anim.CrossFade ("idle");
 		smooth = 5.0f;
-		walkingSpeed = 10.0f;
-		maxSpeed = 25.0f;
+		walkingSpeed = 20.0f;
+		maxSpeed = 50.0f;
+		originalMaxSpeed = maxSpeed;
 		anim.CrossFade ("idle");
+		charWidth = 5.0f;
+		rayDist = 20.0f;
 	}
 	
 	// Update is called once per frame
@@ -60,10 +67,9 @@ public class ReachGoal : MonoBehaviour {
 		targetAccel = new Vector3 (target.transform.position.x - transform.position.x, 0.0f,target.transform.position.z - transform.position.z);
 		//targetAccel = new Vector3 (transform.position.x - target.transform.position.x, 0.0f, transform.position.z - target.transform.position.z);
 		targetAccel = collisions (targetAccel);
+//		targetAccel = avoidObjects (targetAccel);
 		targetAccel = targetAccel.normalized;
 		targetAccel = targetAccel * accMag;
-
-
 
 		float mag = velocity.magnitude;
 		if (mag <= walkingSpeed && mag > idleSpeed) {
@@ -76,7 +82,7 @@ public class ReachGoal : MonoBehaviour {
 	}
 
 	void RotateTo(Vector3 targetPosition){
-		float maxDistance = 20.0f;
+		//maxDistance is the maximum ray distance
 		Quaternion destinationRotation;
 		Vector3 relativePosition;
 		relativePosition = targetPosition - transform.position;
@@ -84,10 +90,10 @@ public class ReachGoal : MonoBehaviour {
 		Debug.DrawRay(transform.position,targetAccel.normalized*30,Color.red);
 		Debug.DrawRay(transform.position,velocity.normalized*20,Color.green);
 		Debug.DrawRay(transform.position,acceleration.normalized*10,Color.blue);
-		Debug.DrawRay(transform.position - transform.right*5.0f, transform.forward * maxDistance, Color.yellow);
-		Debug.DrawRay(transform.position + transform.right*5.0f, transform.forward * maxDistance, Color.yellow);
-		Debug.DrawRay(transform.position - transform.right*5.0f, (transform.forward - transform.right) * 2 * maxDistance, Color.yellow);
-		Debug.DrawRay(transform.position + transform.right*5.0f, (transform.forward + transform.right) * 2 * maxDistance, Color.yellow);
+		Debug.DrawRay(transform.position - transform.right*charWidth, transform.forward * rayDist, Color.yellow);
+		Debug.DrawRay(transform.position + transform.right*charWidth, transform.forward * rayDist, Color.yellow);
+		Debug.DrawRay(transform.position - transform.right*charWidth, (transform.forward - transform.right) * 1.5f * rayDist, Color.yellow);
+		Debug.DrawRay(transform.position + transform.right*charWidth, (transform.forward + transform.right) * 1.5f * rayDist, Color.yellow);
 		//Debug.DrawRay(transform.position, (target.transform.position - transform.position) * 50.0f, Color.yellow);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
@@ -102,45 +108,63 @@ public class ReachGoal : MonoBehaviour {
 		if (distance <= epsilon) {
 			maxSpeed = 0.0f; 
 		}
-		else { //exponential growth, capped at previous maxSpeed
+		else { //exponential growth translated up by 10, capped at originalMaxSpeed
 			//fixme
-			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, 50.0f);
+			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, originalMaxSpeed);
 		}
 	}
 
+	Vector3 avoidObjects(Vector3 acceleration){
+		RaycastHit hitL;
+		RaycastHit hitR;
+
+		bool hitLeft = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward, out hitL, rayDist);
+		bool hitRight = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward, out hitR, rayDist);
+
+		float targetDist = Vector3.Distance (transform.position, target.transform.position);
+
+		if (hitLeft && (targetDist >= hitL.distance)) {
+			return Vector3.RotateTowards(acceleration, transform.forward + transform.right, 2.0f, 0.0f);
+		}
+
+		if (hitRight && (targetDist >= hitR.distance)) {
+			return Vector3.RotateTowards(acceleration, transform.forward - transform.right, 2.0f, 0.0f);
+		}
+
+		return acceleration;
+	}
+
 	Vector3 collisions(Vector3 acceleration) {
-		float maxDistance = 100.0f;
 		RaycastHit hitL;
 		RaycastHit hitR;
 		RaycastHit hitLS;
 		RaycastHit hitRS;
 		RaycastHit hitT;
 
-		float charWidth;
+		bool hitLeft = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward, out hitL, rayDist);
+		bool hitRight = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward, out hitR, rayDist);
+		bool hitLeftS = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward - transform.right, out hitLS, 1.5f * rayDist);
+		bool hitRightS = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward + transform.right, out hitRS, 1.5f * rayDist);
+		bool hitTarget = Physics.Raycast (transform.position, target.transform.position - transform.position, out hitT, rayDist);
 
-		bool hitLeft = Physics.Raycast (transform.position - transform.right*5.0f, transform.forward, out hitL, maxDistance);
-		bool hitRight = Physics.Raycast (transform.position + transform.right*5.0f, transform.forward, out hitR, maxDistance);
-		bool hitLeftS = Physics.Raycast (transform.position - transform.right*5.0f, transform.forward - transform.right, out hitR, 2 * maxDistance);
-		bool hitRightS = Physics.Raycast (transform.position + transform.right*5.0f, transform.forward + transform.right, out hitR, 2 * maxDistance);
-		bool hitTarget = Physics.Raycast (transform.position, target.transform.position - transform.position, out hitT, maxDistance);
-
-		float lDist = (transform.position - transform.right * 5.0f - target.transform.position).magnitude;
-		float rDist = (transform.position + transform.right * 5.0f - target.transform.position).magnitude;
+		float lDist = (transform.position - transform.right * charWidth - target.transform.position).magnitude;
+		float rDist = (transform.position + transform.right * charWidth - target.transform.position).magnitude;
 		Debug.Log ("rDist: " + rDist + " lDist: " + lDist);
 		bool rightClose = rDist < lDist;
+		float targetDist = Vector3.Distance (transform.position, target.transform.position);
 
 		if (!hitLeft && !hitRight && !hitLeftS && !hitRightS && !hitTarget) {
 			return acceleration;
 		} else if (!hitLeft && !hitRight) {
 			if (rightClose) {
-				if (!hitRightS) {
+				if (!hitRightS || (targetDist <= hitRS.distance)) {
 					//acceleration already set towards target
 					return acceleration;
 				} else {
 					return transform.forward * (acceleration.magnitude);
 				}
 			} else {
-				if (!hitLeftS) {
+				if (!hitLeftS || (targetDist <= hitLS.distance)) {
 					return acceleration;
 				} else {
 					return transform.forward * (acceleration.magnitude);
@@ -150,12 +174,12 @@ public class ReachGoal : MonoBehaviour {
 			Debug.Log("hitRight: " + hitRight);
 			if (rightClose) {
 				Debug.Log("\trightClose: " + rightClose);
-				if (!hitRightS) {
+				if (!hitRightS && (targetDist > hitRS.distance)) {
 					Debug.Log ("\t\tNot HitRightS");
 					return Vector3.RotateTowards (acceleration, transform.forward + transform.right, 1.0f, 0.0f);
 				} else {
 					Debug.Log("\t\t\thitRightS is True");
-					if (!hitLeftS) {
+					if (!hitLeftS && (targetDist > hitLS.distance)) {
 						Debug.Log("\t\t\t\tNot hitLeftS");
 						return (transform.forward - transform.right) * acceleration.magnitude;
 						//return Vector3.RotateTowards (acceleration, transform.forward - transform.right, 1.0f, 0.0f);
@@ -165,12 +189,12 @@ public class ReachGoal : MonoBehaviour {
 				}
 			} else {
 				Debug.Log("LeftClose");
-				if (!hitLeftS) {
+				if (!hitLeftS && (targetDist > hitLS.distance)) {
 					Debug.Log("\tNot HitleftS");
 					return Vector3.RotateTowards (acceleration, transform.forward - transform.right, 1.0f, 0.0f);
 				} else {
 					Debug.Log ("\t\tHitLeftS");
-					if (!hitRightS) {
+					if (!hitRightS && (targetDist > hitRS.distance)) {
 						Debug.Log ("\t\t\tNot HitRightS");
 						return Vector3.RotateTowards (acceleration, transform.forward + transform.right, 1.0f, 0.0f);
 					} else {
