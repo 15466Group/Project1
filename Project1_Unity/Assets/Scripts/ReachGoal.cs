@@ -49,7 +49,7 @@ public class ReachGoal : MonoBehaviour {
 		originalMaxSpeed = maxSpeed;
 		anim.CrossFade ("idle");
 		charWidth = 5.0f;
-		rayDist = 20.0f;
+		rayDist = 30.0f;
 	}
 	
 	// Update is called once per frame
@@ -95,10 +95,10 @@ public class ReachGoal : MonoBehaviour {
 		Debug.DrawRay(transform.position,targetAccel.normalized*30,Color.red);
 		Debug.DrawRay(transform.position,velocity.normalized*20,Color.green);
 		Debug.DrawRay(transform.position,acceleration.normalized*10,Color.blue);
-		Debug.DrawRay(transform.position - transform.right*charWidth, transform.forward.normalized * rayDist, Color.yellow);
-		Debug.DrawRay(transform.position + transform.right*charWidth, transform.forward.normalized * rayDist, Color.yellow);
-		Debug.DrawRay(transform.position - transform.right*charWidth, (transform.forward - transform.right).normalized * 1.5f * rayDist, Color.yellow);
-		Debug.DrawRay(transform.position + transform.right*charWidth, (transform.forward + transform.right).normalized * 1.5f * rayDist, Color.yellow);
+		//Debug.DrawRay(transform.position - transform.right*charWidth, transform.forward.normalized * rayDist, Color.yellow);
+		//Debug.DrawRay(transform.position + transform.right*charWidth, transform.forward.normalized * rayDist, Color.yellow);
+		//Debug.DrawRay(transform.position - transform.right*charWidth, (transform.forward - transform.right).normalized * 1.5f * rayDist, Color.yellow);
+		//Debug.DrawRay(transform.position + transform.right*charWidth, (transform.forward + transform.right).normalized * 1.5f * rayDist, Color.yellow);
 		//Debug.DrawRay(transform.position, (target.transform.position - transform.position) * 50.0f, Color.yellow);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
@@ -118,6 +118,57 @@ public class ReachGoal : MonoBehaviour {
 			maxSpeed = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, originalMaxSpeed);
 		}
 	}
+
+	void OnDrawGizmos() {
+		Gizmos.color = Color.yellow;
+		Gizmos.DrawWireSphere (transform.position, rayDist);
+	}
+
+
+
+	Vector3 calculateAcceleration() {
+		rayDist = 30.0f;
+		rayDist = Mathf.Min (rayDist, (goal.transform.position - transform.position).magnitude);
+		Collider[] hits = Physics.OverlapSphere (transform.position, rayDist);
+		Vector3 accel = new Vector3 (goal.transform.position.x - transform.position.x, 0.0f,goal.transform.position.z - transform.position.z);
+
+		bool hitLeft = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward, rayDist);
+		bool hitRight = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward, rayDist);
+		bool hitForward = hitLeft || hitRight;
+		bool hitDirect = Physics.Raycast (transform.position, goal.transform.position - transform.position, rayDist);
+		if (!hitForward && !hitDirect) {
+			return accel;
+		}
+		else if (!hitForward && hitDirect){
+			return transform.forward.normalized * accMag;
+		}
+		else {
+			foreach (Collider obstacle in hits) {
+				if(obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+					Debug.Log (obstacle.gameObject.name);
+					Vector3 obstacleLoc = new Vector3 (obstacle.transform.position.x, 0.0f, obstacle.transform.position.z);
+					RaycastHit hit;
+					bool hitObstacle = Physics.Raycast (transform.position, obstacleLoc - transform.position, out hit, rayDist);
+					//bool hitObstacle = Physics.Raycast (transform.position, transform.forward, out hit, rayDist);
+					Debug.DrawRay(transform.position, (obstacleLoc - transform.position) * rayDist, Color.yellow);
+					Vector3 normal = hit.normal.normalized * accMag;
+					float obstacleDist = hit.distance;
+					//float obstacleDist = Vector3.Distance (obstacleLoc, transform.position);
+					//maxRadsDelta = Mathf.Deg2Rad * 20.0f * (1.0f - (obstacleDist/rayDist));
+					if(obstacleDist < Vector3.Distance (goal.transform.position, transform.position)) {
+						accel = accel * obstacleDist/rayDist + normal * (1.0f - (obstacleDist/rayDist));
+						//accel = transform.forward * accMag * obstacleDist/rayDist - normal * (1.0f - (obstacleDist/rayDist));
+						//accel = accel * obstacleDist/rayDist + transform.right * accMag * (1.0f - (obstacleDist/rayDist));
+						Debug.DrawRay (hit.point, normal * (1.0f - (obstacleDist/rayDist)));
+						accel = accel.normalized * accMag;
+					}
+				}
+			}
+			return accel;
+		}
+	}
+
+
 	/*
 	Vector3 avoidObjects(Vector3 acceleration){
 		RaycastHit hitL;
@@ -174,7 +225,7 @@ public class ReachGoal : MonoBehaviour {
 		return targetAccel;
 	}*/
 
-
+	/*
 	Vector3 calculateAcceleration () {
 		RaycastHit hitL;
 		RaycastHit hitR;
@@ -251,7 +302,7 @@ public class ReachGoal : MonoBehaviour {
 		} else {
 			return targetAccel;
 		}
-	}
+	}*/
 
 	/*Vector3 collisions(Vector3 acceleration) {
 		RaycastHit hitL;
