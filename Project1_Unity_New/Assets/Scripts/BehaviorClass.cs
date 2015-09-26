@@ -12,7 +12,7 @@ public class BehaviorClass : MonoBehaviour {
 
 	//for all behaviors
 	private Vector3 velocity;
-	private Vector3 targetPosition;
+	private Vector3 nextPosition;
 	public Vector3 acceleration{ get; set; }
 	public Vector3 targetAccel { get; set; }
 	public float accMag { get; set; }
@@ -31,6 +31,7 @@ public class BehaviorClass : MonoBehaviour {
 	//just for reaching goal
 	public float charWidth  { get; set; }
 	public float rayDist  { get; set; }
+	public float rayDistMax  { get; set; }
 	public float originalMaxSpeed { get; set; }
 	public GameObject goal;
 
@@ -41,10 +42,10 @@ public class BehaviorClass : MonoBehaviour {
 		anim = GetComponent<Animation>();
 
 		velocity = new Vector3 ();
-		targetPosition = new Vector3 (); //position where char wants to move to next
+		nextPosition = new Vector3 (); //position where char wants to move to next
 		acceleration = new Vector3 ();
 		targetAccel = new Vector3 ();
-		accMag = 50.0f;
+		accMag = 500.0f;
 		maxRadsDelta = Mathf.Deg2Rad * 20.0f;
 		maxMagDelta = 100.0f;
 		maxSpeed = 50.0f;
@@ -57,7 +58,8 @@ public class BehaviorClass : MonoBehaviour {
 		randomRad = 0.0f;
 
 		charWidth = 5.0f;
-		rayDist = 20.0f;
+		rayDist = 30.0f;
+		rayDistMax = rayDist;
 		originalMaxSpeed = maxSpeed;
 
 		anim.CrossFade ("idle");
@@ -65,34 +67,33 @@ public class BehaviorClass : MonoBehaviour {
 	
 	// Update is called once per frame
 	public virtual void Update () {
+		//get the new targetAccel
+		targetAccel = targetAccel.normalized;
+		targetAccel = targetAccel * accMag;
 		acceleration = Vector3.RotateTowards (acceleration, targetAccel, maxRadsDelta, maxMagDelta);
-		targetPosition = transform.position + velocity * Time.deltaTime;
+		nextPosition = transform.position + velocity * Time.deltaTime;
 		if (velocity != new Vector3())
-			RotateTo (targetPosition);
+			RotateTo (nextPosition);
 
 		transform.position += velocity * Time.deltaTime;
 		velocity = velocity + acceleration * Time.deltaTime;
 		velocity = Vector3.ClampMagnitude (velocity, maxSpeed);
 
 		float mag = velocity.magnitude;
-		Debug.Log ("mag: " + mag);
 		if (mag <= walkingSpeed && mag > 0.0f) {
-			Debug.Log ("Walking");
 			anim.CrossFade ("Walk");
 		} else if (mag > walkingSpeed) {
-			Debug.Log ("Running");
 			anim.CrossFade ("Run");
 		} else {
-			Debug.Log ("Idle");
 			anim.CrossFade ("idle");
 		}
 	}
 
-	void RotateTo(Vector3 targetPosition){
+	void RotateTo(Vector3 pos){
 		//maxDistance is the maximum ray distance
 		Quaternion destinationRotation;
 		Vector3 relativePosition;
-		relativePosition = targetPosition - transform.position;
+		relativePosition = pos - transform.position;
 		Debug.DrawRay(transform.position,relativePosition*10,Color.red);
 		Debug.DrawRay(transform.position,targetAccel.normalized*30,Color.red);
 		Debug.DrawRay(transform.position,velocity.normalized*20,Color.green);
@@ -104,5 +105,53 @@ public class BehaviorClass : MonoBehaviour {
 		//Debug.DrawRay(transform.position, (target.transform.position - transform.position) * 50.0f, Color.yellow);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
+	}
+
+	
+	void OnDrawGizmos() {
+		Gizmos.color = Color.yellow;
+		Gizmos.DrawWireSphere (transform.position, rayDist);
+	}
+
+	//deals with obstacle avoidance
+	public Vector3 calculateAcceleration(Vector3 targetPosition) {
+		rayDist = Mathf.Min (rayDistMax, (targetPosition - transform.position).magnitude);
+		Collider[] hits = Physics.OverlapSphere (transform.position, rayDist);
+		Vector3 accel = new Vector3 (targetPosition.x - transform.position.x, 0.0f,targetPosition.z - transform.position.z);
+		
+		bool hitLeft = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward, rayDist);
+		bool hitRight = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward, rayDist);
+		bool hitForward = hitLeft || hitRight;
+		bool hitDirect = Physics.Raycast (transform.position, targetPosition - transform.position, rayDist);
+		if (!hitForward && !hitDirect) {
+			return accel;
+		}
+		else if (!hitForward && hitDirect){
+			return transform.forward.normalized * accMag;
+		}
+		else {
+			foreach (Collider obstacle in hits) {
+				if(obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+					Debug.Log (obstacle.gameObject.name);
+					Vector3 obstacleLoc = new Vector3 (obstacle.transform.position.x, 0.0f, obstacle.transform.position.z);
+					RaycastHit hit;
+					bool hitObstacle = Physics.Raycast (transform.position, obstacleLoc - transform.position, out hit, rayDist);
+					//bool hitObstacle = Physics.Raycast (transform.position, transform.forward, out hit, rayDist);
+					Debug.DrawRay(transform.position, (obstacleLoc - transform.position) * rayDist, Color.yellow);
+					Vector3 normal = hit.normal.normalized * accMag;
+					float obstacleDist = hit.distance;
+					//float obstacleDist = Vector3.Distance (obstacleLoc, transform.position);
+					//maxRadsDelta = Mathf.Deg2Rad * 20.0f * (1.0f - (obstacleDist/rayDist));
+					if(obstacleDist < Vector3.Distance (targetPosition, transform.position)) {
+						accel = accel * obstacleDist/rayDist + normal * (1.0f - (obstacleDist/rayDist));
+						//accel = transform.forward * accMag * obstacleDist/rayDist - normal * (1.0f - (obstacleDist/rayDist));
+						//accel = accel * obstacleDist/rayDist + transform.right * accMag * (1.0f - (obstacleDist/rayDist));
+						Debug.DrawRay (hit.point, normal * (1.0f - (obstacleDist/rayDist)));
+						accel = accel.normalized * accMag;
+					}
+				}
+			}
+			return accel;
+		}
 	}
 }
