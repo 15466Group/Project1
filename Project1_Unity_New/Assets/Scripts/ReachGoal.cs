@@ -6,9 +6,10 @@ public class ReachGoal : BehaviorClass {
 	public override void Start ()
 	{
 		base.Start ();
-		accMag = 500.0f;
-		rayDist = 30.0f;
-		rayDistMax = rayDist;
+//		accMag = 500.0f;
+//		rayDist = 30.0f;
+//		rayDistMax = rayDist;
+//		maxRadsDelta = Mathf.Deg2Rad * 20.0f;
 		behaviorWeight = 2.0f;
 	}
 
