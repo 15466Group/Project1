@@ -40,16 +40,16 @@ public class ReachGoal : MonoBehaviour {
 		targetPosition = new Vector3 (0.0f, 0.0f, 0.0f);
 		maxMagDelta = 100.0f;
 		//as maxRadsDelta increases, guy turns towards goal faster
-		maxRadsDelta = Mathf.Deg2Rad * 20.0f;
+		maxRadsDelta = Mathf.Deg2Rad * 10.0f;
 		idleSpeed = 0.0f;
 		anim.CrossFade ("idle");
 		smooth = 5.0f;
 		walkingSpeed = 20.0f;
-		maxSpeed = 50.0f;
+		maxSpeed = 20.0f;
 		originalMaxSpeed = maxSpeed;
 		anim.CrossFade ("idle");
 		charWidth = 5.0f;
-		rayDist = 30.0f;
+		rayDist = 15.0f;
 	}
 	
 	// Update is called once per frame
@@ -73,6 +73,7 @@ public class ReachGoal : MonoBehaviour {
 //		targetAccel = avoidObjects (targetAccel);
 
 		targetAccel = calculateAcceleration ();
+		targetAccel = new Vector3 (targetAccel.x, 0.0f, targetAccel.z);
 		targetAccel = targetAccel.normalized;
 		targetAccel = targetAccel * accMag;
 
@@ -126,17 +127,111 @@ public class ReachGoal : MonoBehaviour {
 
 
 
+	/*
 	Vector3 calculateAcceleration() {
 		rayDist = 30.0f;
 		rayDist = Mathf.Min (rayDist, (goal.transform.position - transform.position).magnitude);
 		Collider[] hits = Physics.OverlapSphere (transform.position, rayDist);
 		Vector3 accel = new Vector3 (goal.transform.position.x - transform.position.x, 0.0f,goal.transform.position.z - transform.position.z);
 
+		foreach (Collider obstacle in hits) {
+			if (obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+				Debug.Log (obstacle.gameObject.name);
+				RaycastHit hit;
+				Vector3 closest = obstacle.ClosestPointOnBounds(transform.position);
+				bool hitObstacle = Physics.Raycast (transform.position, closest - transform.position, out hit, rayDist);
+				//bool hitObstacle = Physics.Raycast (transform.position, transform.forward, out hit, rayDist);
+				Debug.DrawRay (transform.position, (closest - transform.position) * rayDist, Color.yellow);
+				Vector3 normal = hit.normal.normalized * accMag;
+				float obstacleDist = hit.distance;
+				//float obstacleDist = Vector3.Distance (obstacleLoc, transform.position);
+				//maxRadsDelta = Mathf.Deg2Rad * 20.0f * (1.0f - (obstacleDist/rayDist));
+				if (obstacleDist < Vector3.Distance (goal.transform.position, transform.position)) {
+					accel = accel * obstacleDist / rayDist + normal * (1.0f - (obstacleDist / rayDist));
+					//accel = transform.forward * accMag * obstacleDist/rayDist - normal * (1.0f - (obstacleDist/rayDist));
+					//accel = accel * obstacleDist/rayDist + transform.right * accMag * (1.0f - (obstacleDist/rayDist));
+					Debug.DrawRay (hit.point, normal * (1.0f - (obstacleDist / rayDist)));
+					accel = accel.normalized * accMag;
+				}
+			}
+		}
+		return accel;
+	}
+	*/
+
+	Vector3 calculateAcceleration() {
+		rayDist = 40.0f;
+		rayDist = Mathf.Min (rayDist, (goal.transform.position - transform.position).magnitude);
+		Collider[] hits = Physics.OverlapSphere (transform.position, rayDist);
+		Vector3 accel = new Vector3 (goal.transform.position.x - transform.position.x, 0.0f,goal.transform.position.z - transform.position.z);
+		accel = accel.normalized * accMag;
+		RaycastHit hitD;
 		bool hitLeft = Physics.Raycast (transform.position - transform.right*charWidth, transform.forward, rayDist);
 		bool hitRight = Physics.Raycast (transform.position + transform.right*charWidth, transform.forward, rayDist);
 		bool hitForward = hitLeft || hitRight;
-		bool hitDirect = Physics.Raycast (transform.position, goal.transform.position - transform.position, rayDist);
+		bool hitDirect = Physics.Raycast (transform.position, goal.transform.position - transform.position, out hitD, rayDist);
+
 		if (!hitForward && !hitDirect) {
+			Debug.Log (hitForward + " " + hitDirect);
+			Debug.Log ("inhere1");
+			return accel;
+		} else if (!hitForward && hitDirect) {
+			Debug.Log (hitD.collider.name);
+			Debug.Log (hitForward + " " + hitDirect);
+			Debug.Log ("inhere2");
+			return transform.forward.normalized * accMag;
+		} else {
+			accel = accel.normalized;
+
+			if (hits.Length == 2) {
+				Debug.Log ("asdfasdfadsfadsfadsf");
+				return accel.normalized * accMag;
+			}
+			Vector3 accumulate = new Vector3 (0.0f, 0.0f, 0.0f);
+			foreach (Collider obstacle in hits) {
+				if (obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+					RaycastHit hit;
+					RaycastHit hitClose;
+					Vector3 groundPosition = new Vector3 (obstacle.transform.position.x, 0.0f, obstacle.transform.position.z);
+					Physics.Raycast (transform.position, groundPosition - transform.position, out hit, rayDist);
+					float dist;
+					Vector3 normal;
+					Physics.Raycast (transform.position, hit.normal * (-1.0f), out hitClose, rayDist);
+					dist = hitClose.distance;
+					normal = hitClose.normal.normalized;
+					Debug.DrawRay (transform.position, (hitClose.point - transform.position).normalized * dist, Color.white);
+					Debug.DrawRay (hitClose.point, normal * rayDist, Color.white);
+					Debug.Log (hit.normal);
+					//Debug.DrawRay (transform.position, hit.normal * (-1.0f), Color.white);
+					//float dist = hitClose.distance;
+					Vector3 temp;
+					Debug.Log ("number of close objects: " + (hits.Length - 2));
+
+					//Vector3 normal = hitClose.normal.normalized;
+					Debug.Log (hitClose.normal);
+					//Debug.DrawRay (transform.position, (hitClose.point - transform.position).normalized * dist, Color.white);
+					//Debug.DrawRay (hitClose.point, normal * rayDist, Color.white);
+					temp = (accel * dist / rayDist) + (normal * (1.0f - (dist / rayDist)));
+					//Debug.Log ((accel * dist/rayDist));
+					//Debug.Log (normal * (1.0f - (dist/rayDist)));
+					accumulate = accumulate + temp;
+
+				}
+
+
+			}
+		
+			Debug.Log (originalMaxSpeed);
+			if (accumulate == new Vector3 ()) {
+				accumulate = accel;
+			}
+			return accumulate = accumulate.normalized * accMag;
+		}
+		//}
+
+
+		//bool hitDirect = Physics.Raycast (transform.position, goal.transform.position - transform.position, rayDist);
+		/*if (!hitForward && !hitDirect) {
 			return accel;
 		}
 		else if (!hitForward && hitDirect){
@@ -146,17 +241,19 @@ public class ReachGoal : MonoBehaviour {
 			foreach (Collider obstacle in hits) {
 				if(obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
 					Debug.Log (obstacle.gameObject.name);
-					Vector3 obstacleLoc = new Vector3 (obstacle.transform.position.x, 0.0f, obstacle.transform.position.z);
+					//Vector3 obstacleLoc = new Vector3 (obstacle.transform.position.x, 0.0f, obstacle.transform.position.z);
+
+					//Vector3 closest = obstacle.ClosestPointOnBounds(transform.position);
 					RaycastHit hit;
-					bool hitObstacle = Physics.Raycast (transform.position, obstacleLoc - transform.position, out hit, rayDist);
+					bool hitObstacle = Physics.Raycast (transform.position, closest - transform.position, out hit, rayDist);
 					//bool hitObstacle = Physics.Raycast (transform.position, transform.forward, out hit, rayDist);
-					Debug.DrawRay(transform.position, (obstacleLoc - transform.position) * rayDist, Color.yellow);
+					Debug.DrawRay(transform.position, (closest - transform.position) * rayDist, Color.yellow);
 					Vector3 normal = hit.normal.normalized * accMag;
 					float obstacleDist = hit.distance;
 					//float obstacleDist = Vector3.Distance (obstacleLoc, transform.position);
 					//maxRadsDelta = Mathf.Deg2Rad * 20.0f * (1.0f - (obstacleDist/rayDist));
 					if(obstacleDist < Vector3.Distance (goal.transform.position, transform.position)) {
-						accel = accel * obstacleDist/rayDist + normal * (1.0f - (obstacleDist/rayDist));
+						accel = accel * obstacleDist/100.0f + normal * (1.0f - (obstacleDist/100.0f));
 						//accel = transform.forward * accMag * obstacleDist/rayDist - normal * (1.0f - (obstacleDist/rayDist));
 						//accel = accel * obstacleDist/rayDist + transform.right * accMag * (1.0f - (obstacleDist/rayDist));
 						Debug.DrawRay (hit.point, normal * (1.0f - (obstacleDist/rayDist)));
@@ -165,7 +262,7 @@ public class ReachGoal : MonoBehaviour {
 				}
 			}
 			return accel;
-		}
+		}*/
 	}
 
 
