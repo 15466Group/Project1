@@ -1,47 +1,38 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ReachGoal: MonoBehaviour {
-
-	public GameObject goal;
-	private Vector3 velocity;
-	private Vector3 acceleration;
-	private float accMag;
-	private float accMagDefault = 50.0f;
-	private float speedMaxDefault = 20.0f;
-	private float speedMax;
-	private Vector3 target;
-	private float epsilon = 5.0f;
-	private float searchRadius = 100.0f;
-	private Vector3 targetPosition;
-	private float rayDist = 20.0f;
+public class ReachGoal: Behavior {
 
 	// Use this for initialization
 	void Start () {
-		velocity = new Vector3 ();
-		acceleration = new Vector3 ();
-		accMag = accMagDefault;
-		speedMax = speedMaxDefault;
+		base.Start ();
+//		velocity = new Vector3 ();
+//		acceleration = new Vector3 ();
+//		accMag = accMagDefault;
+//		speedMax = speedMaxDefault;
 		target = goal.transform.position;
-		acceleration = calculateAcceleration ();
+		acceleration = base.calculateAcceleration (target);
 	}
 
 	void Update () {
-		//want him to accelerate towards the target.position
-		Debug.Log (acceleration);
-		transform.position += velocity * Time.deltaTime;
-		velocity = velocity + acceleration * Time.deltaTime;
-		velocity = Vector3.ClampMagnitude (velocity, speedMax);
-		Debug.Log (speedMax);
-		//veloCloseToTarget ();
-		targetPosition = transform.position + velocity * Time.deltaTime;
+//		//want him to accelerate towards the target.position
+//		Debug.Log (acceleration);
+//		transform.position += velocity * Time.deltaTime;
+//		velocity = velocity + acceleration * Time.deltaTime;
+//		velocity = Vector3.ClampMagnitude (velocity, speedMax);
+//		Debug.Log (speedMax);
+//		//veloCloseToTarget ();
+//		targetPosition = transform.position + velocity * Time.deltaTime;
+//		target = goal.transform.position;
+//		if (velocity != new Vector3())
+//			RotateTo (targetPosition);
+//		acceleration = calculateAcceleration ();
+//		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
 		target = goal.transform.position;
-		if (velocity != new Vector3())
-			RotateTo (targetPosition);
-		acceleration = calculateAcceleration ();
-		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
-
+		base.Update ();
 	}
+
+	/********************************************************************************************
 	
 	void RotateTo(Vector3 targetPosition){
 		//maxDistance is the maximum ray distance
@@ -79,7 +70,7 @@ public class ReachGoal: MonoBehaviour {
 		} else {
 			return (goal.transform.position - transform.position).normalized * accMag;
 		}
-	}*/
+	}* /
 
 	Vector3 checkCloseCalls(Vector3 acceleration) {
 		Collider[] hits = Physics.OverlapSphere (transform.position, 5.0f);
@@ -172,4 +163,6 @@ public class ReachGoal: MonoBehaviour {
 			speedMax = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, speedMax);
 		}
 	}
+
+	***********************************************************************************/
 }
