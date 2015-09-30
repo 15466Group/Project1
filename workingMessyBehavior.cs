@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 [System.Serializable]
@@ -96,15 +96,51 @@ public class Behavior : MonoBehaviour {
 		Gizmos.color = Color.magenta;
 		Gizmos.DrawSphere (transform.position, closeRayDist);
 	}
-
-	//even if something isn't directly in front of the character, should still avoid it if it's too close
-	//cus he cant turn instantaneously
+	
 	Vector3 checkCloseCalls(Vector3 acceleration) {
+		float weight = charWeight;
 		Collider[] hits = Physics.OverlapSphere (transform.position, closeRayDist);
 		//don't include hitting self
 		if (hits.Length > 1) {
-			Vector3 accumulator = obstacleAvoidance(closeRayDist, hits);
-			return accumulator.normalized * accMag;
+			Vector3 accumulator = new Vector3 ();
+			foreach (Collider obstacle in hits) {
+				if (obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+					if (!obstacle.gameObject.name.Contains("samuz")){
+						weight = obstacleWeight;
+					} else {
+						//the wanderer only moves out of the way for other wanderer's
+						//the reachers always move out of the way for every character
+						if(isWanderer && obstacle.gameObject.GetComponent ("Wander") == null) {
+							weight = 0.0f;
+						}
+						else {
+							weight = charWeight;
+						}
+					}
+					RaycastHit hit = new RaycastHit();
+					RaycastHit hitN;
+					RaycastHit[] rays;
+					rays = Physics.RaycastAll(transform.position, obstacle.transform.position - transform.position);
+					foreach (RaycastHit h in rays){
+						if (h.collider == obstacle){
+							hit = h;
+							break;
+						}
+					}
+					Debug.DrawRay(hit.point, hit.normal * accMag, Color.white);
+					Vector3 normal = hit.normal;
+					bool closest = Physics.Raycast (transform.position, normal * (-1.0f), out hitN, closeRayDist);
+					Debug.DrawRay (hitN.point, (hitN.normal) * accMag, Color.black);
+					if (closest) {
+						accumulator += hitN.normal.normalized * weight * (1.0f - hitN.distance / closeRayDist);
+					} else {
+						float estim = Mathf.Min (closeRayDist, hit.distance);
+						accumulator += (transform.position - obstacle.transform.position).normalized * weight * (1.0f - estim / closeRayDist);
+					}
+				}
+			}
+			Vector3 accel = accumulator.normalized * accMag;
+			return accel;
 		} else {
 			return acceleration;
 		}
@@ -126,8 +162,46 @@ public class Behavior : MonoBehaviour {
 		
 		Debug.DrawRay(transform.position,transform.forward * 50.0f,Color.red);
 		if (hitRight || hitLeft) {
-			Collider[] hits = Physics.OverlapSphere(transform.position, rayDist);
-			Vector3 accumulator = obstacleAvoidance(rayDist, hits);
+			Collider[] hits = Physics.OverlapSphere (transform.position, rayDist);
+			Vector3 accumulator = new Vector3 ();
+			foreach (Collider obstacle in hits) {
+				if (obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
+					if (!obstacle.gameObject.name.Contains("samuz")){
+						weight = obstacleWeight;
+					} else {
+						//the wanderer only moves out of the way for other wanderer's
+						//the reachers always move out of the way for every character
+						if(isWanderer && obstacle.gameObject.GetComponent ("Wander") == null) {
+							weight = 0.0f;
+						}
+						else {
+							weight = charWeight;
+						}
+					}
+					//doing this to find the closest point on the bounds of the obstacle,
+					//	note that builtin ClosestPointOnBounds does not work on rotated objects, as we found out the hard way...
+					RaycastHit hit = new RaycastHit();
+					RaycastHit hitN;
+					RaycastHit[] rays;
+					rays = Physics.RaycastAll(transform.position, obstacle.transform.position - transform.position);
+					foreach (RaycastHit h in rays){
+						if (h.collider == obstacle){
+							hit = h;
+							break;
+						}
+					}
+					Vector3 normal = hit.normal;
+					//raycast from position to potential closest point on bounds (may miss the object though in the else case)
+					bool closest = Physics.Raycast (transform.position, normal * (-1.0f), out hitN, rayDist);
+					if (closest) {
+						//as distance gets smaller, hitN.distance/rayDist is smaller so closer to 1.0f, bigger, closer to 0.0f
+						accumulator += hitN.normal.normalized * weight * (1.0f - (hitN.distance / rayDist));
+					} else {
+						float estim = Mathf.Min (rayDist, hit.distance);
+						accumulator += (transform.position - obstacle.transform.position).normalized * weight * (1.0f - (estim / rayDist));
+					}
+				}
+			}
 			accumulator += transform.forward.normalized;
 			return checkCloseCalls(accumulator.normalized * accMag);
 		}
@@ -140,50 +214,6 @@ public class Behavior : MonoBehaviour {
 				return checkCloseCalls((target - transform.position).normalized * accMag);
 			}
 		}
-	}
-
-	Vector3 obstacleAvoidance(float radius, Collider[] hits){
-		float weight = charWeight;
-		Vector3 accumulator = new Vector3 ();
-		foreach (Collider obstacle in hits) {
-			if (obstacle.gameObject != this.gameObject && obstacle.gameObject.name != "Ground") {
-				if (!obstacle.gameObject.name.Contains("samuz")){
-					weight = obstacleWeight;
-				} else {
-					//the wanderer only moves out of the way for other wanderer's
-					//the reachers always move out of the way for every character
-					if(isWanderer && obstacle.gameObject.GetComponent ("Wander") == null) {
-						weight = 0.0f;
-					}
-					else {
-						weight = charWeight;
-					}
-				}
-				//doing this to find the closest point on the bounds of the obstacle,
-				//	note that builtin ClosestPointOnBounds does not work on rotated objects, as we found out the hard way...
-				RaycastHit hit = new RaycastHit();
-				RaycastHit hitN;
-				RaycastHit[] rays;
-				rays = Physics.RaycastAll(transform.position, obstacle.transform.position - transform.position);
-				foreach (RaycastHit h in rays){
-					if (h.collider == obstacle){
-						hit = h;
-						break;
-					}
-				}
-				Vector3 normal = hit.normal;
-				//raycast from position to potential closest point on bounds (may miss the object though in the else case)
-				bool closest = Physics.Raycast (transform.position, normal * (-1.0f), out hitN, radius);
-				if (closest) {
-					//as distance gets smaller, hitN.distance/rayDist is smaller so closer to 1.0f, bigger, closer to 0.0f
-					accumulator += hitN.normal.normalized * weight * (1.0f - (hitN.distance / radius));
-				} else {
-					float estim = Mathf.Min (rayDist, hit.distance);
-					accumulator += (transform.position - obstacle.transform.position).normalized * weight * (1.0f - (estim / radius));
-				}
-			}
-		}
-		return accumulator;
 	}
 	
 	void veloCloseToTarget () {
