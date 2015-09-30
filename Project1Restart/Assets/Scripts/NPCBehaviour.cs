@@ -2,7 +2,7 @@
 using System.Collections;
 
 [System.Serializable]
-public class Behavior : MonoBehaviour {
+public class NPCBehaviour : MonoBehaviour {
 	
 	//superclass for wander and reach goal behaviors
 	//accelerate object towards a position (either randomly generated [wander] or a goal [reachgoal])
@@ -56,6 +56,23 @@ public class Behavior : MonoBehaviour {
 	
 	// Update is called once per frame
 	public virtual void Update () {
+		doPositionAndVelocity ();
+		doAcceleration ();
+		doAnimation ();
+	}
+
+	protected void doAnimation(){
+		float mag = velocity.magnitude;
+		if (mag > 0.0f && mag <= walkingSpeed) {
+			anim.CrossFade ("Walk");
+		} else if (mag > walkingSpeed) {
+			anim.CrossFade ("Run");
+		} else {
+			anim.CrossFade("idle");
+		}
+	}
+
+	protected void doPositionAndVelocity(){
 		transform.position += velocity * Time.deltaTime;
 		velocity = velocity + acceleration * Time.deltaTime;
 		velocity = Vector3.ClampMagnitude (velocity, speedMax);
@@ -67,17 +84,11 @@ public class Behavior : MonoBehaviour {
 		float targetDist = Vector3.Distance (transform.position, target);
 		rayDist = Mathf.Min (rayDistDefault, targetDist);
 		closeRayDist = Mathf.Min (closeRayDistDefault, targetDist);
+	}
+
+	protected virtual void doAcceleration(){
 		acceleration = calculateAcceleration (target);
 		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
-		
-		float mag = velocity.magnitude;
-		if (mag > 0.0f && mag <= walkingSpeed) {
-			anim.CrossFade ("Walk");
-		} else if (mag > walkingSpeed) {
-			anim.CrossFade ("Run");
-		} else {
-			anim.CrossFade("idle");
-		}
 	}
 	
 	void RotateTo(Vector3 targetPosition){
@@ -110,11 +121,10 @@ public class Behavior : MonoBehaviour {
 		}
 	}
 	
-	public virtual Vector3 calculateAcceleration(Vector3 target) {
+	protected virtual Vector3 calculateAcceleration(Vector3 target) {
 		RaycastHit hitL;
 		RaycastHit hitR;
-		float weight = charWeight;
-		
+
 		bool hitLeft = Physics.Raycast (transform.position - transform.right.normalized * charWidth, transform.forward, out hitL, rayDist);
 		bool hitRight = Physics.Raycast (transform.position + transform.right.normalized * charWidth, transform.forward, out hitR, rayDist);
 		
@@ -142,7 +152,7 @@ public class Behavior : MonoBehaviour {
 		}
 	}
 	
-	Vector3 obstacleAvoidance(float radius, Collider[] hits){
+	protected virtual Vector3 obstacleAvoidance(float radius, Collider[] hits){
 		float weight = charWeight;
 		Vector3 accumulator = new Vector3 ();
 		foreach (Collider obstacle in hits) {

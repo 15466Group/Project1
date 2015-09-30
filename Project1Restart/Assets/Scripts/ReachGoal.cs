@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ReachGoal: Behavior {
+public class ReachGoal: NPCBehaviour {
 
 	public GameObject goal;
 

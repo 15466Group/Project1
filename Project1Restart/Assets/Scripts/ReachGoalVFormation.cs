@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ReachGoalVFormation: Behavior {
+public class ReachGoalVFormation: NPCBehaviour {
 	
 	public GameObject goal;
 	private static int counter = 0;

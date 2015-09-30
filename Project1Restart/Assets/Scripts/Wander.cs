@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Wander : Behavior {
+public class Wander : NPCBehaviour {
 
 	private Vector3 newPos;
 	private float radius;
