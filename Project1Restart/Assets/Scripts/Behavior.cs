@@ -3,10 +3,10 @@ using System.Collections;
 
 [System.Serializable]
 public class Behavior : MonoBehaviour {
-
+	
 	//superclass for wander and reach goal behaviors
 	//accelerate object towards a position (either randomly generated [wander] or a goal [reachgoal])
-
+	
 	private Animation anim;
 	public Vector3 velocity { get; set; }
 	public Vector3 acceleration { get; set; }
@@ -22,15 +22,15 @@ public class Behavior : MonoBehaviour {
 	public float rayDistDefault { get; set; }
 	public float closeRayDist { get; set; }
 	public float closeRayDistDefault { get; set; }
-
+	
 	private float walkingSpeed;
 	private float charWidth;
 	private float smooth;
 	private float obstacleWeight;
 	private float charWeight;
-
+	
 	public bool isWanderer { get; set; }
-
+	
 	// Use this for initialization
 	public virtual void Start () {
 		velocity = new Vector3 ();
@@ -69,7 +69,7 @@ public class Behavior : MonoBehaviour {
 		closeRayDist = Mathf.Min (closeRayDistDefault, targetDist);
 		acceleration = calculateAcceleration (target);
 		acceleration = new Vector3 (acceleration.x, 0.0f, acceleration.z).normalized * accMag;
-
+		
 		float mag = velocity.magnitude;
 		if (mag > 0.0f && mag <= walkingSpeed) {
 			anim.CrossFade ("Walk");
@@ -79,7 +79,7 @@ public class Behavior : MonoBehaviour {
 			anim.CrossFade("idle");
 		}
 	}
-
+	
 	void RotateTo(Vector3 targetPosition){
 		//maxDistance is the maximum ray distance
 		Quaternion destinationRotation;
@@ -91,19 +91,19 @@ public class Behavior : MonoBehaviour {
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
 	}
-
+	
 	void OnDrawGizmos(){
 		Gizmos.color = Color.magenta;
 		Gizmos.DrawSphere (transform.position, closeRayDist);
 	}
-
+	
 	//even if something isn't directly in front of the character, should still avoid it if it's too close
 	//cus he cant turn instantaneously
 	Vector3 checkCloseCalls(Vector3 acceleration) {
 		Collider[] hits = Physics.OverlapSphere (transform.position, closeRayDist);
 		//don't include hitting self
 		if (hits.Length > 1) {
-			Vector3 accumulator = obstacleAvoidance(closeRayDist, hits);
+			Vector3 accumulator = obstacleAvoidance(rayDist, hits);
 			return accumulator.normalized * accMag;
 		} else {
 			return acceleration;
@@ -117,7 +117,7 @@ public class Behavior : MonoBehaviour {
 		
 		bool hitLeft = Physics.Raycast (transform.position - transform.right.normalized * charWidth, transform.forward, out hitL, rayDist);
 		bool hitRight = Physics.Raycast (transform.position + transform.right.normalized * charWidth, transform.forward, out hitR, rayDist);
-
+		
 		//doesn't matter if an object is behind the goal, can still reach it withtout bumping into the object
 		float distToTarget = Vector3.Distance (transform.position, target);
 		if (distToTarget < hitL.distance && distToTarget < hitR.distance) {
@@ -141,7 +141,7 @@ public class Behavior : MonoBehaviour {
 			}
 		}
 	}
-
+	
 	Vector3 obstacleAvoidance(float radius, Collider[] hits){
 		float weight = charWeight;
 		Vector3 accumulator = new Vector3 ();
@@ -171,9 +171,11 @@ public class Behavior : MonoBehaviour {
 						break;
 					}
 				}
+				Debug.DrawRay(hit.point, hit.normal * accMag, Color.white);
 				Vector3 normal = hit.normal;
 				//raycast from position to potential closest point on bounds (may miss the object though in the else case)
 				bool closest = Physics.Raycast (transform.position, normal * (-1.0f), out hitN, radius);
+				Debug.DrawRay (hitN.point, (hitN.normal) * accMag, Color.black);
 				if (closest) {
 					//as distance gets smaller, hitN.distance/rayDist is smaller so closer to 1.0f, bigger, closer to 0.0f
 					accumulator += hitN.normal.normalized * weight * (1.0f - (hitN.distance / radius));
