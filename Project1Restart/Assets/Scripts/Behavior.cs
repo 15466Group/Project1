@@ -8,20 +8,20 @@ public class Behavior : MonoBehaviour {
 	//accelerate object towards a position (either randomly generated [wander] or a goal [reachgoal])
 	
 	private Animation anim;
-	public Vector3 velocity { get; set; }
-	public Vector3 acceleration { get; set; }
-	public float accMag { get; set; }
-	public float accMagDefault { get; set; }
-	public float speedMaxDefault { get; set; }
-	public float speedMax { get; set; }
-	public Vector3 target { get; set; }
-	public float epsilon { get; set; }
-	public float searchRadius { get; set; }
-	public Vector3 targetPosition { get; set; }
-	public float rayDist { get; set; }
-	public float rayDistDefault { get; set; }
-	public float closeRayDist { get; set; }
-	public float closeRayDistDefault { get; set; }
+	protected Vector3 velocity { get; set; }
+	protected Vector3 acceleration { get; set; }
+	protected float accMag { get; set; }
+	protected float accMagDefault { get; set; }
+	protected float speedMaxDefault { get; set; }
+	protected float speedMax { get; set; }
+	protected Vector3 target { get; set; }
+	protected float epsilon { get; set; }
+	protected float searchRadius { get; set; }
+	protected Vector3 targetPosition { get; set; }
+	protected float rayDist { get; set; }
+	protected float rayDistDefault { get; set; }
+	protected float closeRayDist { get; set; }
+	protected float closeRayDistDefault { get; set; }
 	
 	private float walkingSpeed;
 	private float charWidth;
@@ -29,7 +29,7 @@ public class Behavior : MonoBehaviour {
 	private float obstacleWeight;
 	private float charWeight;
 	
-	public bool isWanderer { get; set; }
+	protected bool isWanderer { get; set; }
 	
 	// Use this for initialization
 	public virtual void Start () {
@@ -94,7 +94,7 @@ public class Behavior : MonoBehaviour {
 	
 	void OnDrawGizmos(){
 		Gizmos.color = Color.magenta;
-		Gizmos.DrawSphere (transform.position, closeRayDist);
+		Gizmos.DrawWireSphere (transform.position, closeRayDist);
 	}
 	
 	//even if something isn't directly in front of the character, should still avoid it if it's too close

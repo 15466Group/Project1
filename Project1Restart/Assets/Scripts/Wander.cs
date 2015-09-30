@@ -8,13 +8,15 @@ public class Wander : Behavior {
 
 	private Vector3 targetDir;
 	private Vector3 tempDir;
+	protected float rotationSpeedDeg { get; set; }
 
 	// Use this for initialization
 	public override void Start () {
 		base.Start ();
 		newPos = new Vector3 ();
-		radius = 20.0f;
+		radius = 2.0f;
 		accMagDefault = 50.0f;
+		rotationSpeedDeg = 1.0f;
 		accMag = accMagDefault;
 
 		targetDir = transform.position + transform.forward.normalized * radius;
@@ -35,7 +37,7 @@ public class Wander : Behavior {
 
 		//for smooth turning, we know the new position we want to get to, choose points along a radius
 		//to turn towards that new point until the tempDir and the targetDir are about the same
-		tempDir = Vector3.RotateTowards (tempDir, targetDir, Mathf.Deg2Rad * 1.0f, 0.0f);
+		tempDir = Vector3.RotateTowards (tempDir, targetDir, Mathf.Deg2Rad * rotationSpeedDeg, 0.0f);
 		Debug.DrawRay (transform.position, tempDir.normalized * rayDist * 1.25f, Color.yellow);
 		Debug.DrawRay (transform.position, targetDir.normalized * rayDist * 1.25f, Color.yellow);
 		newPos = transform.position + tempDir;
