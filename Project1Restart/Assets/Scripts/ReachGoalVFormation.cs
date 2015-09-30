@@ -16,10 +16,10 @@ public class ReachGoalVFormation: Behavior {
 		target = calculateVPosition ();
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
-		speedMaxDefault = 50.0f;
-		accMagDefault = 500.0f;
-		rayDistDefault = 50.0f;
-		closeRayDistDefault = 20.0f;
+		speedMaxDefault = 40.0f;
+		accMagDefault = 1000.0f;
+		rayDistDefault = 40.0f;
+		closeRayDistDefault = 15.0f;
 	}
 	
 	public override void Update () {
