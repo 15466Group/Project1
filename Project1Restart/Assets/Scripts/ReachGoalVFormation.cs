@@ -16,7 +16,7 @@ public class ReachGoalVFormation: Behavior {
 		target = calculateVPosition ();
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
-		speedMaxDefault = 40.0f;
+		speedMaxDefault = 35.0f;
 		accMagDefault = 1000.0f;
 		rayDistDefault = 40.0f;
 		closeRayDistDefault = 15.0f;
