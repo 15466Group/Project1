@@ -80,7 +80,7 @@ public class Behavior : MonoBehaviour {
 		}
 	}
 	
-	void RotateTo(Vector3 targetPosition){
+	void RotateTo(Vector3 targetPosition){ //blah
 		//maxDistance is the maximum ray distance
 		Quaternion destinationRotation;
 		Vector3 relativePosition;
