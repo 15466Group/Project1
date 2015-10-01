@@ -9,6 +9,9 @@ public class Wander : NPCBehaviour {
 	private Vector3 targetDir;
 	private Vector3 tempDir;
 	protected float rotationSpeedDeg { get; set; }
+	protected float rotationSpeedDegDefault { get; set; }
+	private bool restricted;
+	public Vector3 biasOverride;
 
 	// Use this for initialization
 	public override void Start () {
@@ -16,7 +19,8 @@ public class Wander : NPCBehaviour {
 		newPos = new Vector3 ();
 		radius = 2.0f;
 		accMagDefault = 50.0f;
-		rotationSpeedDeg = 1.0f;
+		rotationSpeedDegDefault = 1.0f;
+		rotationSpeedDeg = rotationSpeedDegDefault;
 		accMag = accMagDefault;
 
 		targetDir = transform.position + transform.forward.normalized * radius;
@@ -28,21 +32,45 @@ public class Wander : NPCBehaviour {
 	// Update is called once per frame
 	public override void Update () {
 		//choosing a new position to accelerate towards
-		if(Vector3.Angle (tempDir.normalized, targetDir.normalized) < 5.0f) {
-			float theta = Random.Range(0.0f, 360.0f) * Mathf.Deg2Rad;
-			float newX = Mathf.Cos (theta) * radius;
-			float newZ = Mathf.Sin (theta) * radius;
-			targetDir = new Vector3(newX, 0.0f, newZ);
+		if (biasDir == Vector3.zero) {
+			if (Vector3.Angle (tempDir.normalized, targetDir.normalized) < 5.0f) {
+				float theta;
+				if(restricted) {
+					float offset = Vector3.Angle (transform.right, Vector3.right);
+					if ((Vector3.Cross (biasOverride, Vector3.right)).z > 0) {
+						offset = 360.0f - offset;
+					}
+					theta = Random.Range (0.0f - offset, 180.0f - offset) * Mathf.Deg2Rad;
+				}
+				else {
+					theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
+				}
+				//float theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
+				float newX = Mathf.Cos (theta) * radius;
+				float newZ = Mathf.Sin (theta) * radius;
+				targetDir = new Vector3 (newX, 0.0f, newZ);
+				rotationSpeedDeg = rotationSpeedDegDefault;
+			}
+		} else {
+			if (Vector3.Angle (targetDir, biasDir) > 90.0f) {
+				targetDir = biasDir;
+				rotationSpeedDeg = rotationSpeedDegDefault * 20.0f;
+			}
 		}
+
 
 		//for smooth turning, we know the new position we want to get to, choose points along a radius
 		//to turn towards that new point until the tempDir and the targetDir are about the same
 		tempDir = Vector3.RotateTowards (tempDir, targetDir, Mathf.Deg2Rad * rotationSpeedDeg, 0.0f);
 		Debug.DrawRay (transform.position, tempDir.normalized * rayDist * 1.25f, Color.yellow);
-		Debug.DrawRay (transform.position, targetDir.normalized * rayDist * 1.25f, Color.yellow);
+		Debug.DrawRay (transform.position, targetDir.normalized * rayDist * 1.25f, Color.cyan);
 		newPos = transform.position + tempDir;
 
 		target = newPos;
 		base.Update ();
+	}
+
+	public void restrictForward(bool restrict) {
+		restricted = restrict;
 	}
 }

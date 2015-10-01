@@ -22,6 +22,8 @@ public class NPCBehaviour : MonoBehaviour {
 	protected float rayDistDefault { get; set; }
 	protected float closeRayDist { get; set; }
 	protected float closeRayDistDefault { get; set; }
+
+	protected Vector3 biasDir { get; set; }
 	
 	private float walkingSpeed;
 	private float charWidth;
@@ -56,6 +58,7 @@ public class NPCBehaviour : MonoBehaviour {
 	
 	// Update is called once per frame
 	public virtual void Update () {
+		biasDir = Vector3.zero;
 		doPositionAndVelocity ();
 		doAcceleration ();
 		doAnimation ();
@@ -195,6 +198,7 @@ public class NPCBehaviour : MonoBehaviour {
 				}
 			}
 		}
+		biasDir = accumulator.normalized;
 		return accumulator;
 	}
 	

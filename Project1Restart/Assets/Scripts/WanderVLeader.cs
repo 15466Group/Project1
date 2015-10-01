@@ -6,7 +6,7 @@ public class WanderVLeader : Wander {
 	// Use this for initialization
 	public override void Start () {
 		base.Start ();
-		rotationSpeedDeg = 0.1f;
+		rotationSpeedDegDefault= 0.1f;
 		speedMaxDefault = 20.0f;
 		
 	}
