@@ -11,6 +11,7 @@ public class ReachGoal: NPCBehaviour {
 		target = goal.transform.position;
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
+		isReachingGoal = true;
 	}
 
 	public override void Update () {

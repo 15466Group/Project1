@@ -19,35 +19,42 @@ public class FleeOrWander : NPCBehaviour {
 		fleeScript = GetComponent<Flee>();
 		wanderScript = GetComponent<Wander> ();
 		base.Start ();
-		fleeDist = 3.0f * rayDist;
-		interDist = 6.0f * rayDist;
+		fleeDist = rayDist;
+		interDist = 3.0f * rayDist;
+		isReachingGoal = false;
 
 		actualDist = Vector3.Distance (transform.position, goal.transform.position);
+		setScripts ();
+	}
 
+	void setScripts(){
 		if (actualDist < fleeDist) {
 			lastZone = 0;
-//			wanderScript.restrictForward (true);
-//			wanderScript.biasOverride = transform.position - goal.transform.position;
+			if (!fleeScript.enabled){
+				fleeScript.acceleration = wanderScript.acceleration;
+			}
 			fleeScript.enabled = true;
 			wanderScript.enabled = false;
 		} else if (actualDist < interDist) {
-			//biasDir = (transform.position - goal.transform.position).normalized;
-			//overridingBias = true;
-//			wanderScript.enabled = true;
-//			fleeScript.enabled = false;
 			if(lastZone == 0) {
+				if (!fleeScript.enabled){
+					fleeScript.acceleration = wanderScript.acceleration;
+				}
 				fleeScript.enabled = true;
 				wanderScript.enabled = false;
 			}
 			else {
+				if (!wanderScript.enabled) {
+					wanderScript.acceleration = fleeScript.acceleration;
+				}
 				fleeScript.enabled = false;
 				wanderScript.enabled = true;
 			}
 		} else {
-			//biasDir = Vector3.zero;
-			//overridingBias = false;
-//			wanderScript.restrictForward(false);
 			lastZone = 1;
+			if (!wanderScript.enabled) {
+				wanderScript.acceleration = fleeScript.acceleration;
+			}
 			fleeScript.enabled = false;
 			wanderScript.enabled = true;
 		}
@@ -62,33 +69,6 @@ public class FleeOrWander : NPCBehaviour {
 	// Update is called once per frame
 	public override void Update () {
 		actualDist = Vector3.Distance (transform.position, goal.transform.position);
-		
-		if (actualDist < fleeDist) {
-			lastZone = 0;
-//			wanderScript.restrictForward(true);
-//			wanderScript.biasOverride = transform.position - goal.transform.position;
-			fleeScript.enabled = true;
-			wanderScript.enabled = false;
-		} else if (actualDist < interDist) {
-			//biasDir = (transform.position - goal.transform.position).normalized;
-			//overridingBias = true;
-//			wanderScript.enabled = true;
-//			fleeScript.enabled = false;
-			if(lastZone == 0) {
-				fleeScript.enabled = true;
-				wanderScript.enabled = false;
-			}
-			else {
-				fleeScript.enabled = false;
-				wanderScript.enabled = true;
-			}
-		} else {
-			//biasDir = Vector3.zero;
-			//overridingBias = false;
-//			wanderScript.restrictForward(false);
-			lastZone = 1;
-			fleeScript.enabled = false;
-			wanderScript.enabled = true;
-		}
+		setScripts ();
 	}
 }

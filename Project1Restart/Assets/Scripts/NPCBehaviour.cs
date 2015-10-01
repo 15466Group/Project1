@@ -9,7 +9,7 @@ public class NPCBehaviour : MonoBehaviour {
 	
 	private Animation anim;
 	protected Vector3 velocity { get; set; }
-	protected Vector3 acceleration { get; set; }
+	public Vector3 acceleration { get; set; }
 	protected float accMag { get; set; }
 	protected float accMagDefault { get; set; }
 	protected float speedMaxDefault { get; set; }
@@ -32,6 +32,7 @@ public class NPCBehaviour : MonoBehaviour {
 	private float charWeight;
 	
 	protected bool isWanderer { get; set; }
+	protected bool isReachingGoal { get; set; }
 	
 	// Use this for initialization
 	public virtual void Start () {
@@ -203,15 +204,16 @@ public class NPCBehaviour : MonoBehaviour {
 	}
 	
 	void veloCloseToTarget () {
-		float epsilon = 0.7f;
-		float xDistance = Mathf.Abs (transform.position.x - target.x);
-		float zDistance = Mathf.Abs (transform.position.z - target.z);
-		float distance = Mathf.Sqrt (xDistance * xDistance + zDistance * zDistance);
-		if (distance <= epsilon) {
-			speedMax = 0.0f; 
-		}
-		else { //exponential growth translated up by 10, capped at originalMaxSpeed
-			speedMax = Mathf.Min(Mathf.Pow(1.1f,distance) + 10.0f, speedMaxDefault);
+		if (isReachingGoal) {
+			float epsilon = 0.7f;
+			float xDistance = Mathf.Abs (transform.position.x - target.x);
+			float zDistance = Mathf.Abs (transform.position.z - target.z);
+			float distance = Mathf.Sqrt (xDistance * xDistance + zDistance * zDistance);
+			if (distance <= epsilon) {
+				speedMax = 0.0f; 
+			} else { //exponential growth translated up by 10, capped at originalMaxSpeed
+				speedMax = Mathf.Min (Mathf.Pow (1.1f, distance) + 10.0f, speedMaxDefault);
+			}
 		}
 	}
 }

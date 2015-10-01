@@ -12,10 +12,10 @@ public class ReachGoalVFormation: NPCBehaviour {
 		base.Start ();
 		counter ++;
 		VFormID = counter;
-		Debug.Log ("ID " + VFormID + " assigned");
 		target = calculateVPosition ();
 		acceleration = base.calculateAcceleration (target);
 		isWanderer = false;
+		isReachingGoal = true;
 		speedMaxDefault = 35.0f;
 		accMagDefault = 1000.0f;
 		rayDistDefault = 40.0f;

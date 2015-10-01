@@ -10,8 +10,6 @@ public class Wander : NPCBehaviour {
 	private Vector3 tempDir;
 	protected float rotationSpeedDeg { get; set; }
 	protected float rotationSpeedDegDefault { get; set; }
-	private bool restricted;
-	public Vector3 biasOverride;
 
 	// Use this for initialization
 	public override void Start () {
@@ -26,6 +24,7 @@ public class Wander : NPCBehaviour {
 		targetDir = transform.position + transform.forward.normalized * radius;
 		tempDir = targetDir;
 		isWanderer = true;
+		isReachingGoal = false;
 
 	}
 	
@@ -33,28 +32,19 @@ public class Wander : NPCBehaviour {
 	public override void Update () {
 		//choosing a new position to accelerate towards
 		if (biasDir == Vector3.zero) {
+			//the character is not being affected by any obstacle
 			if (Vector3.Angle (tempDir.normalized, targetDir.normalized) < 5.0f) {
-				float theta;
-				if(restricted) {
-					float offset = Vector3.Angle (transform.right, Vector3.right);
-					if ((Vector3.Cross (biasOverride, Vector3.right)).z > 0) {
-						offset = 360.0f - offset;
-					}
-					theta = Random.Range (0.0f - offset, 180.0f - offset) * Mathf.Deg2Rad;
-				}
-				else {
-					theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
-				}
-				//float theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
+				float theta = Random.Range (0.0f, 360.0f) * Mathf.Deg2Rad;
 				float newX = Mathf.Cos (theta) * radius;
 				float newZ = Mathf.Sin (theta) * radius;
 				targetDir = new Vector3 (newX, 0.0f, newZ);
 				rotationSpeedDeg = rotationSpeedDegDefault;
 			}
 		} else {
+			//the character is being affected by an obstacle
+			rotationSpeedDeg = rotationSpeedDegDefault * 20.0f;
 			if (Vector3.Angle (targetDir, biasDir) > 90.0f) {
 				targetDir = biasDir;
-				rotationSpeedDeg = rotationSpeedDegDefault * 20.0f;
 			}
 		}
 
@@ -68,9 +58,5 @@ public class Wander : NPCBehaviour {
 
 		target = newPos;
 		base.Update ();
-	}
-
-	public void restrictForward(bool restrict) {
-		restricted = restrict;
 	}
 }
