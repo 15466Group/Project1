@@ -52,8 +52,8 @@ public class Wander : NPCBehaviour {
 		//for smooth turning, we know the new position we want to get to, choose points along a radius
 		//to turn towards that new point until the tempDir and the targetDir are about the same
 		tempDir = Vector3.RotateTowards (tempDir, targetDir, Mathf.Deg2Rad * rotationSpeedDeg, 0.0f);
-		Debug.DrawRay (transform.position, tempDir.normalized * rayDist * 1.25f, Color.yellow);
-		Debug.DrawRay (transform.position, targetDir.normalized * rayDist * 1.25f, Color.cyan);
+//		Debug.DrawRay (transform.position, tempDir.normalized * rayDist * 1.25f, Color.yellow);
+//		Debug.DrawRay (transform.position, targetDir.normalized * rayDist * 1.25f, Color.cyan);
 		newPos = transform.position + tempDir;
 
 		target = newPos;

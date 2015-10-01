@@ -100,17 +100,17 @@ public class NPCBehaviour : MonoBehaviour {
 		Quaternion destinationRotation;
 		Vector3 relativePosition;
 		relativePosition = targetPosition - transform.position;
-		Debug.DrawRay(transform.position,relativePosition*10,Color.red);
-		Debug.DrawRay(transform.position,velocity.normalized*20,Color.green);
-		Debug.DrawRay(transform.position,acceleration.normalized*10,Color.blue);
+//		Debug.DrawRay(transform.position,relativePosition*10,Color.red);
+//		Debug.DrawRay(transform.position,velocity.normalized*20,Color.green);
+//		Debug.DrawRay(transform.position,acceleration.normalized*10,Color.blue);
 		destinationRotation = Quaternion.LookRotation (relativePosition);
 		transform.rotation = Quaternion.Slerp (transform.rotation, destinationRotation, Time.deltaTime * smooth);
 	}
 	
-	void OnDrawGizmos(){
-		Gizmos.color = Color.magenta;
-		Gizmos.DrawWireSphere (transform.position, closeRayDist);
-	}
+//	void OnDrawGizmos(){
+//		Gizmos.color = Color.magenta;
+//		Gizmos.DrawWireSphere (transform.position, closeRayDist);
+//	}
 	
 	//even if something isn't directly in front of the character, should still avoid it if it's too close
 	//cus he cant turn instantaneously
@@ -138,7 +138,7 @@ public class NPCBehaviour : MonoBehaviour {
 			return (target - transform.position).normalized * accMag;
 		}
 		
-		Debug.DrawRay(transform.position,transform.forward * 50.0f,Color.red);
+//		Debug.DrawRay(transform.position,transform.forward * 50.0f,Color.red);
 		if (hitRight || hitLeft) {
 			Collider[] hits = Physics.OverlapSphere(transform.position, rayDist);
 			Vector3 accumulator = obstacleAvoidance(rayDist, hits);
@@ -185,11 +185,11 @@ public class NPCBehaviour : MonoBehaviour {
 						break;
 					}
 				}
-				Debug.DrawRay(hit.point, hit.normal * accMag, Color.white);
+//				Debug.DrawRay(hit.point, hit.normal * accMag, Color.white);
 				Vector3 normal = hit.normal;
 				//raycast from position to potential closest point on bounds (may miss the object though in the else case)
 				bool closest = Physics.Raycast (transform.position, normal * (-1.0f), out hitN, radius);
-				Debug.DrawRay (hitN.point, (hitN.normal) * accMag, Color.black);
+//				Debug.DrawRay (hitN.point, (hitN.normal) * accMag, Color.black);
 				if (closest) {
 					//as distance gets smaller, hitN.distance/rayDist is smaller so closer to 1.0f, bigger, closer to 0.0f
 					accumulator += hitN.normal.normalized * weight * (1.0f - (hitN.distance / radius));

@@ -60,11 +60,11 @@ public class FleeOrWander : NPCBehaviour {
 		}
 	}
 
-	void OnDrawGizmos(){
-		Gizmos.color = Color.yellow;
-		Gizmos.DrawWireSphere (transform.position, fleeDist);
-		Gizmos.DrawWireSphere (transform.position, interDist);
-	}
+//	void OnDrawGizmos(){
+//		Gizmos.color = Color.yellow;
+//		Gizmos.DrawWireSphere (transform.position, fleeDist);
+//		Gizmos.DrawWireSphere (transform.position, interDist);
+//	}
 
 	// Update is called once per frame
 	public override void Update () {
