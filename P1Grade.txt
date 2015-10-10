@@ -1,0 +1,29 @@
+Project 1
+Total: 121/120 = 100.83%
+
+Wander: 
+Implementation - 20/20
+Collisions - 10/10
+- Nice job
+
+ReachGoal: 
+Implementation - 19/20
+Collisions - 10/10
+- In case of multiple characters like this scene, increasing the arriving radius, or setting it dynamicly might be a good idea
+
+FlockingWander: 
+Implementation - 19/20
+Collisions - 9/10
+- Occasionally, the characters bumb into each other (Probably from the leader)
+- Sometimes, character can get quite far away.
+
+Documentation - 10/10
+
+Extra Credit: 
+Flee - 10/10
+
+VShapeFormationWander - 9/10
+- Took a while to get into formation
+
+Other - 5/10
+- Definitely looks like ants. Yep bunch of ants walking around.
